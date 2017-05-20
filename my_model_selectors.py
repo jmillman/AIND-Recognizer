@@ -75,38 +75,26 @@ class SelectorBIC(ModelSelector):
         :return: GaussianHMM object
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
 
         best_score = float("inf")
         best_model = None
 
         for num_states in range(self.min_n_components, self.max_n_components + 1):
-            try:
-                model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
-                logL = model.score(self.X, self.lengths)
-
-                parameters = num_states * num_states + 2 * num_states * len(self.X[0]) - 1
-                bic = (-2) * logL + math.log(len(self.X)) * parameters
+                try:
+                    model = GaussianHMM(n_components=num_states, n_iter=1000, random_state=self.random_state).fit(self.X, self.lengths)
+                    score = model.score(self.X, self.lengths)
+                    parameters = num_states * num_states + 2 * num_states * len(self.X[0]) - 1
+                    bic = (-2) * score + math.log(len(self.X)) * parameters
+                except:
+                    # print("except " + self.this_word)
+                    bic = float('Inf')
 
                 if bic < best_score:
                     best_score = bic
                     best_model = model
 
-            except:
-                pass
-
         return best_model
-
-        # prints out oll of the words contained in words
-        # print("self.words.keys()={}".format(self.words.keys()))
-        # print("self.hwords.keys()={}".format(self.hwords.keys()))
-        # the array of sequences that all entries of JOHN have,
-        # print("self.words['JOHN']={}".format(self.words['JOHN']))
-        # print("self.words.keys()={}".format(self.words.keys()))
-        # print("*******************")
-        # print("self.words['JOHN']={}".format(self.words['JOHN']))
-        # print("*******************")
-        # print("self.hwords['JOHN']={}".format(self.hwords['JOHN']))
-        # raise Exception('Quit')
 
 class SelectorDIC(ModelSelector):
     ''' select best model based on Discriminative Information Criterion
@@ -125,29 +113,36 @@ class SelectorDIC(ModelSelector):
         best_model = None
 
         for num_states in range(self.min_n_components, self.max_n_components + 1):
+            word_count = 0
+            score_total_other_words = 0.0
+
             try:
-                wc = 0.0
-                score_total_other_words = 0.0
-
-                model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
-                logL = model.score(self.X, self.lengths)
-
-                for word in self.hwords:
-                    if word != self.this_word:
-                        sequences, lengths = self.hwords[word]
-                        score_total_other_words += model.score(sequences, lengths)
-                        wc += 1
-
-                score_average_other_words = score_total_other_words / float(wc)
-
-                dic = logL - score_average_other_words
-                if dic > best_score:
-                    best_score = dic
-                    best_model = model
-
+                # covariance_type="diag",
+                model = GaussianHMM(n_components=num_states, n_iter=1000, random_state=self.random_state).fit(self.X, self.lengths)
+                score = model.score(self.X, self.lengths)
             except:
-                print("except " + self.this_word)
-                pass
+                score = float('-inf')
+
+            for word in self.hwords:
+                if word != self.this_word:
+                    sequences, lengths = self.hwords[word]
+                    try:
+                        score_total_other_words += model.score(sequences, lengths)
+                    except:
+                        # print("except " + self.this_word)
+                        pass
+                    word_count += 1
+
+            score_average_other_words = score_total_other_words / float(word_count)
+
+            dic = score - score_average_other_words
+            if dic > best_score:
+                best_score = dic
+                best_model = model
+
+            # except:
+            #     print("except " + self.this_word)
+            #     pass
 
         return best_model
 
@@ -172,9 +167,9 @@ class SelectorCV(ModelSelector):
                 for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
                     sequences_train, lengths_train = combine_sequences(cv_train_idx, self.sequences)
                     sequences_test, lengths_test = combine_sequences(cv_test_idx, self.sequences)
-                    model = GaussianHMM(n_components=num_states, n_iter=1000).fit(sequences_train, lengths_train)
-                    logL = model.score(sequences_test, lengths_test)
-                    scores_array.append(logL)
+                    model = GaussianHMM(n_components=num_states, n_iter=1000, random_state=self.random_state, verbose=False).fit(sequences_train, lengths_train)
+                    score = model.score(sequences_test, lengths_test)
+                    scores_array.append(score)
 
                 mean_score = np.mean(scores_array)
 
@@ -183,6 +178,6 @@ class SelectorCV(ModelSelector):
                     best_model = model
 
             except:
-                split_method = KFold(n_splits=2)
+                pass;
 
         return best_model
