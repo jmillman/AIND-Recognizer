@@ -16145,7 +16145,7 @@ Training complete for JOHN with 15 states with time 19.86128236100194 seconds
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Question 2:</strong>  Compare and contrast the possible advantages and disadvantages of the various model selectors implemented.</p>
-<p><strong>Answer 2:</strong> I feel like Cross Validation makes the most sense since you are actually testing your theory on data.  It splits the data, trains, then takes the score of the unseen data after the training.  As long as you have enough data, this is a seems pretty reasonable.  DIC compares it's score to the average of other scores in the dictionary, which might be good in some cases, but it might too heavly favor originality of movements.  Similar words with similar meanings might realistically be similar in sign.  This might penalize that too much, especially with language.  (I assume similar words would have similar signs) Finally BIC which can't easily be summarized is obviously a great theory.  It is harder to compare to the other two without seeing results.  After doing some testing it is a solid #2 with DIC.  CV is by far the best.</p>
+<p><strong>Answer 2:</strong> I feel like Cross Validation makes the most sense since you are actually testing your theory on data.  It splits the data, trains, then takes the score of the unseen data after the training.  As long as you have enough data, this is a seems pretty reasonable.  DIC compares it's score to the average of other scores in the dictionary, which might be good in some cases, but it might too heavly favor originality of movements.  Similar words with similar meanings might realistically be similar in sign.  This might penalize that too much, especially with language.  (I assume similar words would have similar signs) Finally there is BIC which penalizes for too many parameters to guard against overfitting.  I would think that when it comes to sign language, the more inputs the better.  This obviously penalized the features with a lot of parameters in my testing, but those weren't really great features with the other two selectors anyway. All of our features were really other ways at looking at the same few numbers so adding a parameter to essentially express the same number might not always help.  If we had more parameters like hand position, etc, I think this would be worth another consideration.   In this specific test data, BIC is the worst, but it still works almost as well as DIC.  CV is by far the best.</p>
 
 </div>
 </div>
@@ -18100,11 +18100,11 @@ Video  Recognized                                                    Correct
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Question 3:</strong>  Summarize the error results from three combinations of features and model selectors.  What was the "best" combination and why?  What additional information might we use to improve our WER?  For more insight on improving WER, take a look at the introduction to Part 4.</p>
 <p><strong>Answer 3:</strong></p>
-<p>cv    66    66    66    61    63    65    56
-bic    55    61    54    62    55    63    50
-dic    57    60    54    63    54    67    52</p>
+<p>cv    66    66    66    61    63    65    56</p>
+<p>bic    55    61    54    62    55    63    50</p>
+<p>dic    57    60    54    63    54    67    52</p>
 <p>I can't find a way to format the results, but the columns are:
-(feature_ground    feature_norm, feature_polar    feature_delta, features_custom_combined, features_diff, features_custom_combined_and_diff)  The second to the last features_diff is the best.</p>
+(feature_ground, features_norm, feature_polar, feature_delta, features_custom_combined, features_diff, features_custom_combined_and_diff)  The second to the last features_diff is the best.</p>
 <p>Cross Validation was the best selector across the board.  There were only two cases of it getting beat, and it was still a close second, no matter what the feature was.</p>
 <p>The best combination was surprisingly features_diff.  I will paste below so you don't have to scroll.  It is basically the difference in the right and left x, and the right and left y.  I didn't see that coming at all.  I was actually just messing around because I wanted to add that to another set of features and figured it would be cool to see the results. (It seems like the programs seem to all pick John as the first word a lot and are rewarded for that.  This could be a mistake and it just defaults to that answer.  I'd like to see the results with a little different data.)</p>
 <p>Improve WER:
